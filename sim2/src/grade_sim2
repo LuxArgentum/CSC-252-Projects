@@ -29,7 +29,7 @@ then
 
   # BUGFIX:
   #
-  # It appears that Java does *Logic.NOT* remove old .class files when compilation
+  # It appears that Java does *NOT* remove old .class files when compilation
   # fails.  So we had a student who had an old, buggy implementation of the
   # code (which compiled).  When they changed it to a new (non-compiling)
   # version, javac (correctly) fails to compile the code but (maddeningly)
@@ -120,7 +120,7 @@ then
 #  if [[ $(grep -E "[~!&|]" ${JAVA_MORE_RESTRICTIONS}) != "" ]]
 #  then
 #    echo
-#    echo "ERROR: The grading script found that you used some logical operators in Java code (other than the Logic.AND/Logic.OR/Logic.NOT classes) - your grade will be cut in half."
+#    echo "ERROR: The grading script found that you used some logical operators in Java code (other than the AND/OR/NOT classes) - your grade will be cut in half."
 #
 #    echo "  ----- BEGIN MATCHED LINES -----"
 #    grep -E "[~!&|]" ${JAVA_MORE_RESTRICTIONS}

@@ -1,4 +1,4 @@
-package Test;/* Testcase for Sim2.
+/* Testcase for Sim2.
  *
  * Author: Russ Lewis
  *
@@ -16,7 +16,7 @@ public class Test_00_checkFields_sim2
 		Sim2_AdderX     adderX = new Sim2_AdderX(4);
 
 		/* we just just check the various fields - just to see
-		 * if they exist.  This is *Logic.NOT* a logical test of any
+		 * if they exist.  This is *NOT* a logical test of any
 		 * of the functionality!
 		 */
 
