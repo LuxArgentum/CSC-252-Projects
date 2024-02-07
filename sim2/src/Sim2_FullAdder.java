@@ -5,9 +5,10 @@
  */
 public class Sim2_FullAdder {
 
-    public RussWire a, b, carryIn;      // inputs
-    public RussWire sum, carryOut;      // outputs
-    private Sim2_HalfAdder halfAdder1, halfAdder2; // half adders
+    public RussWire a, b, carryIn;                  // inputs
+    public RussWire sum, carryOut;                  // outputs
+    private Sim2_HalfAdder halfAdder1, halfAdder2;  // half adders
+    private OR or;                                  // or gate
 
     /**
      * Constructor for Sim2_FullAdder.
@@ -21,6 +22,7 @@ public class Sim2_FullAdder {
         carryOut = new RussWire();
         halfAdder1 = new Sim2_HalfAdder();
         halfAdder2 = new Sim2_HalfAdder();
+        or = new OR();
     }
 
     public void execute() {
@@ -33,11 +35,9 @@ public class Sim2_FullAdder {
         halfAdder2.execute();
 
         sum.set(halfAdder2.sum.get());
-        carryOut.set(halfAdder1.carry.get() || halfAdder2.carry.get());
-
-        // sum = (!a & !b & c) or (!a & b & !c) or (a & !b & !c) or (a & b & c)
-//        sum.set((!a.get() && !b.get() && carryIn.get()) || (!a.get() && b.get() && !carryIn.get()) || (a.get() && !b.get() && !carryIn.get()) || (a.get() && b.get() && carryIn.get()));
-        // carryOut = (!a & b & c) or (a & !b & c) or (a & b & !c) or (a & b & c)
-//        carryOut.set((!a.get() && b.get() && carryIn.get()) || (a.get() && !b.get() && carryIn.get()) || (a.get() && b.get() && !carryIn.get()) || (a.get() && b.get() && carryIn.get()));
+        or.a = halfAdder1.carry;
+        or.b = halfAdder2.carry;
+        or.execute();
+        carryOut.set(or.out.get());
     }
 }
