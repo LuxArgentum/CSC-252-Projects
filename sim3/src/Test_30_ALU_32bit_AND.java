@@ -1,10 +1,12 @@
-/* Tester class for the ALU: tests the AND operation in a 32-bit ALU.
+/* Tester class for the ALU: tests the Logic.AND operation in a 32-bit ALU.
  * As with the MUX tester classes, we'll define a helper function in the
  * first class, which is then used in several variants, to reduce duplication.
  *
  * Author: Russ Lewis
  */
 
+
+import Logic.RussWire;
 
 import java.util.Random;
 
@@ -75,7 +77,7 @@ public class Test_30_ALU_32bit_AND
 		 */
 		System.out.printf("op=%d bNegate=%b   (size %d)\n", op,bNegate, size);
 		System.out.printf("    actual size: %d\n", alus[0].a.length);
-		System.out.printf("----------------\n");
+		System.out.print("----------------\n");
 
 		for (int i=0; i<alus.length; i++)
 		{
@@ -95,11 +97,11 @@ public class Test_30_ALU_32bit_AND
 		for (int i=bits.length-1; i>=0; i--)
 		{
 			if (i < bits.length-1 && i%4 == 3)
-				System.out.printf(" ");
+				System.out.print(" ");
 			System.out.printf("%d", bits[i].get() ? 1:0);
 		}
 
-		System.out.printf("\n");
+		System.out.print("\n");
 	}
 }
 

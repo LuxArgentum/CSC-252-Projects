@@ -14,7 +14,7 @@ public class RussWire
 
 	public boolean get()
 	{
-		if (this.isSet == false)
+		if (!this.isSet)
 			throw new IllegalArgumentException("A RussWire was read before it had been set.");
 		return this.val;
 	}
@@ -23,7 +23,7 @@ public class RussWire
 
 	public String toString()
 	{
-		if (this.isSet == false)
+		if (!this.isSet)
 			throw new IllegalArgumentException("A RussWire was read before it had been set.");
 
 		if (this.get())

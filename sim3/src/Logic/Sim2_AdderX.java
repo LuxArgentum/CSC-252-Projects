@@ -1,9 +1,11 @@
+package Logic;
+
 /**
  * Author: Matthew Song
  * <p>
  * Purpose: Simulates a physical adder with x bits.
  */
-public class Sim2_AdderX {
+public class Sim2_AdderX implements PhysicalComponentSimulator {
 
     private final int x;
     public RussWire[] a, b;                 // inputs
@@ -59,6 +61,7 @@ public class Sim2_AdderX {
         or2 = new OR();
     }
 
+    @Override
     public void execute() {
         halfAdder.a = a[0];
         halfAdder.b = b[0];

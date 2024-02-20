@@ -1,4 +1,4 @@
-/* Tester class for the ALU Element: tests the OR operation, using the
+/* Tester class for the ALU Element: tests the Logic.OR operation, using the
  * utility function defined in testcase 20.
  *
  * Author: Russ Lewis

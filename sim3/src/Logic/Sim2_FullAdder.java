@@ -1,9 +1,11 @@
+package Logic;
+
 /**
  * Author: Matthew Song
  * <p>
  * Purpose: Simulates a physical full adder.
  */
-public class Sim2_FullAdder {
+public class Sim2_FullAdder implements PhysicalComponentSimulator {
 
     public RussWire a, b, carryIn;                  // inputs
     public RussWire sum, carryOut;                  // outputs
@@ -26,6 +28,7 @@ public class Sim2_FullAdder {
         or = new OR();
     }
 
+    @Override
     public void execute() {
         halfAdder1.a = a;
         halfAdder1.b = b;

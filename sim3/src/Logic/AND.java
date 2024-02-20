@@ -1,15 +1,15 @@
-/* Simulates a physical OR gate.
+package Logic;/* Simulates a physical Logic.AND gate.
  *
  * Author: Russ Lewis
  */
 
-public class OR
+public class AND
 {
 	public void execute()
 	{
 		boolean a_val = a.get();
 		boolean b_val = b.get();
-		out.set(a_val | b_val);
+		out.set(a_val & b_val);
 	}
 
 
@@ -19,7 +19,7 @@ public class OR
 	public RussWire out;
 
 
-	public OR()
+	public AND()
 	{
 		a   = new RussWire();
 		b   = new RussWire();

@@ -1,4 +1,4 @@
-/* Tester class for the ALU Element: tests the AND operation.  As with the
+/* Tester class for the ALU Element: tests the Logic.AND operation.  As with the
  * MUX tester classes, we'll define a helper function in the first class,
  * which is then used in several variants, to reduce duplication.
  *

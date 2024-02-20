@@ -15,7 +15,7 @@ public class Test_00_checkFields_sim3
 		Sim3_ALU        alu  = new Sim3_ALU(4);
 
 		/* we just just check the various fields - just to see
-		 * if they exist.  This is *NOT* a logical test of any
+		 * if they exist.  This is *Logic.NOT* a logical test of any
 		 * of the functionality!
 		 */
 
