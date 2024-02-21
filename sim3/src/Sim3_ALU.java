@@ -1,5 +1,3 @@
-import Logic.RussWire;
-
 /**
  * Sim3_ALU.java
  * <p></p>
@@ -10,20 +8,16 @@ import Logic.RussWire;
  */
 public class Sim3_ALU {
 
+    // Instance variables
+    private final int length;                 // the number of bits in the input and output wires
+    private final Sim3_ALUElement[] element;  // the ALU elements
     // Inputs
     public RussWire[] a;                // a wires
     public RussWire[] b;                // b wires
     public RussWire[] aluOp;            // aluOp wires
     public RussWire bNegate;            // bNegate wire
-
     // Outputs
     public RussWire[] result;           // result wires
-
-    // Instance variables
-    private int length;                 // the number of bits in the input and output wires
-    private Sim3_ALUElement[] element;  // the ALU elements
-
-    private RussWire carry;             // carry wire
 
 
     /**
@@ -40,7 +34,6 @@ public class Sim3_ALU {
         aluOp = new RussWire[3];
         bNegate = new RussWire();
         element = new Sim3_ALUElement[length];
-        carry = new RussWire();
         result = new RussWire[length];
 
         // Initialize the inputs
@@ -66,44 +59,45 @@ public class Sim3_ALU {
     }
 
     /**
-     *
+     * This method is called to simulate the behavior of the ALU.
      */
     public void execute() {
 
-        // TODO
+        // Setting carryIn for the first element
+        // If bNegate is true, then carryIn is true
+        // Otherwise, carryIn is false
+        element[0].carryIn.set(bNegate.get());
 
-        /*
-        for (int i=0; i<X; i++) {
-
-            ... feed the inputs into element[i] (except for LESS) ...
-
-            ... call execute_pass1() on the element ...
+        // Execute the ALU elements for pass 1
+        for (int i = 1; i < length; i++) {
+            element[i - 1].aluOp[0].set(aluOp[0].get());
+            element[i - 1].aluOp[1].set(aluOp[1].get());
+            element[i - 1].aluOp[2].set(aluOp[2].get());
+            element[i - 1].bInvert.set(bNegate.get());
+            element[i - 1].a.set(a[i - 1].get());
+            element[i - 1].b.set(b[i - 1].get());
+            element[i - 1].execute_pass1();
+            element[i].carryIn.set(element[i - 1].carryOut.get());
         }
 
-        ... copy the addResult output from the MSB to the LESS input of the LSB ...
+        // Execute the last ALU element for pass 1
+        element[length - 1].aluOp[0].set(aluOp[0].get());
+        element[length - 1].aluOp[1].set(aluOp[1].get());
+        element[length - 1].aluOp[2].set(aluOp[2].get());
+        element[length - 1].bInvert.set(bNegate.get());
+        element[length - 1].a.set(a[length - 1].get());
+        element[length - 1].b.set(b[length - 1].get());
+        element[length - 1].execute_pass1();
 
-        ... set the rest of the LESS inputs ...
-
-        ... call execute_pass2() on every element, and copy to the result[] output ...
-        */
-
-        carry.set(false);
-
-        for (int i = 0; i < length; i++) {
-            element[i].aluOp[0].set(aluOp[0].get());
-            element[i].aluOp[1].set(aluOp[1].get());
-            element[i].aluOp[2].set(aluOp[2].get());
-            element[i].bInvert.set(bNegate.get());
-            element[i].a.set(a[i].get());
-            element[i].b.set(b[i].get());
-            element[i].carryIn.set(carry.get());
-            element[i].execute_pass1();
-            carry.set(element[i].carryOut.get());
-        }
-
+        // Set the less wire for the first element
         element[0].less.set(element[length - 1].addResult.get());
 
-        for (int i = 0; i < length; i++) {
+        // Execute the first ALU element for pass 2
+        element[0].execute_pass2();
+        result[0].set(element[0].result.get());
+
+        // Execute the rest of the ALU elements for pass 2
+        for (int i = 1; i < length; i++) {
             element[i].less.set(false);
             element[i].execute_pass2();
             result[i].set(element[i].result.get());

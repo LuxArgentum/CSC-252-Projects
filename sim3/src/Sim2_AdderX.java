@@ -1,5 +1,3 @@
-package Logic;
-
 /**
  * Author: Matthew Song
  * <p>
@@ -8,13 +6,8 @@ package Logic;
 public class Sim2_AdderX implements PhysicalComponentSimulator {
 
     private final int x;
-    public RussWire[] a, b;                 // inputs
-    public RussWire[] sum;                  // output
-    public RussWire carryOut, overflow;     // outputs
     private final Sim2_HalfAdder halfAdder;       // half adder
     private final Sim2_FullAdder[] fullAdder;     // full adder
-    private boolean matchingSign;           // overflow condition
-    private boolean matchingSignSum;        // overflow condition
     private final AND and1;                       // and gate
     private final AND and2;                       // and gate
     private final AND and3;                       // and gate
@@ -25,6 +18,11 @@ public class Sim2_AdderX implements PhysicalComponentSimulator {
     private final NOT not4;                       // not gate
     private final OR or;                          // or gate
     private final OR or2;                         // or gate
+    public RussWire[] a, b;                 // inputs
+    public RussWire[] sum;                  // output
+    public RussWire carryOut, overflow;     // outputs
+    private boolean matchingSign;           // overflow condition
+    private boolean matchingSignSum;        // overflow condition
 
     /**
      * Constructor for Sim2_AdderX.

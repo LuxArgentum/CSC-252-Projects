@@ -1,15 +1,13 @@
-package Logic;
-
 /**
  * Author: Matthew Song
  * <p>
  * Purpose: Simulates a physical half adder.
  */
 public class Sim2_HalfAdder implements PhysicalComponentSimulator {
-    public RussWire a, b;           // inputs
-    public RussWire sum, carry;     // outputs
     private final XOR xor;                // xor gate
     private final AND and;                // and gate
+    public RussWire a, b;           // inputs
+    public RussWire sum, carry;     // outputs
 
     /**
      * Constructor for Sim2_HalfAdder.
