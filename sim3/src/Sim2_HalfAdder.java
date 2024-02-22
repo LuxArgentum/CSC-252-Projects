@@ -3,11 +3,11 @@
  * <p>
  * Purpose: Simulates a physical half adder.
  */
-public class Sim2_HalfAdder {
-    public RussWire a, b;           // inputs
-    public RussWire sum, carry;     // outputs
+public class Sim2_HalfAdder implements PhysicalComponentSimulator {
     private final XOR xor;                // xor gate
     private final AND and;                // and gate
+    public RussWire a, b;           // inputs
+    public RussWire sum, carry;     // outputs
 
     /**
      * Constructor for Sim2_HalfAdder.
@@ -22,6 +22,7 @@ public class Sim2_HalfAdder {
         and = new AND();
     }
 
+    @Override
     public void execute() {
         // sum = a XOR b
         xor.a = a;

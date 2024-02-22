@@ -84,9 +84,11 @@ public class XOR
 	public RussWire a,b;   // inputs
 	public RussWire out;   // output
 
-	private NOT not_a, not_b;
-	private AND and1, and2;
-	private OR  or;
+	private final NOT not_a;
+    private final NOT not_b;
+	private final AND and1;
+    private final AND and2;
+	private final OR  or;
 
 	public XOR()
 	{
