@@ -8,6 +8,11 @@ int determine_R_Type(InstructionFields *fields, CPUControl *controlOut);
 
 void determine_I_Type(InstructionFields *fields, CPUControl *controlOut);
 
+void
+writeControlOutExtra(CPUControl *controlOut, int ALUsrc, int ALUop, int bNegate, int memRead, int memWrite,
+                     int memToReg,
+                     int regDst, int regWrite, int branch, int jump, int extra1, int extra2, int extra3);
+
 /**
  * Extracts the fields from the given instruction.
  *
@@ -49,9 +54,9 @@ int fill_CPUControl(InstructionFields *fields, CPUControl *controlOut) {
         case 0x2b:              // sw-Opcode
         case 0x4:               // beq-Opcode
         case 0x2:               // j-Opcode
-        case 0x28:              // sb Function Hex
         case 0x05:              // bne Function Hex
         case 0x20:              // lb Function Hex
+        case 0xc:               // andi-Opcode
             determine_I_Type(fields, controlOut);
             break;
             // Unknown Opcode
@@ -85,6 +90,8 @@ WORD getALUinput2(CPUControl *controlIn,
     // Otherwise, it's the immediate value from the instruction
     if (controlIn->ALUsrc == 0) {
         return rtVal;
+    } else if (controlIn->extra1 == 1) {
+        return (WORD) fieldsIn->imm16;  // Zero-extend the 16-bit immediate to 32 bits.
     } else {
         return fieldsIn->imm32;
     }
@@ -123,6 +130,12 @@ void execute_ALU(CPUControl *controlIn,
             break;
         case 4: // XOR
             aluResultOut->result = input1 ^ input2;
+            break;
+        case 5: // NOR
+            aluResultOut->result = ~(input1 | input2);
+            break;
+        case 6: // MULT
+            aluResultOut->result = input1 * input2;
             break;
         default:
             // Invalid ALU operation
@@ -219,6 +232,15 @@ void
 writeControlOut(CPUControl *controlOut, int ALUsrc, int ALUop, int bNegate, int memRead, int memWrite, int memToReg,
                 int regDst, int regWrite, int branch, int jump) {
 
+    writeControlOutExtra(controlOut, ALUsrc, ALUop, bNegate, memRead, memWrite, memToReg, regDst, regWrite, branch,
+                         jump, 0, 0, 0);
+}
+
+void
+writeControlOutExtra(CPUControl *controlOut, int ALUsrc, int ALUop, int bNegate, int memRead, int memWrite,
+                     int memToReg,
+                     int regDst, int regWrite, int branch, int jump, int extra1, int extra2, int extra3) {
+
     controlOut->ALUsrc = ALUsrc;
     controlOut->ALU.op = ALUop;
     controlOut->ALU.bNegate = bNegate;
@@ -229,6 +251,9 @@ writeControlOut(CPUControl *controlOut, int ALUsrc, int ALUop, int bNegate, int 
     controlOut->regWrite = regWrite;
     controlOut->branch = branch;
     controlOut->jump = jump;
+    controlOut->extra1 = extra1;
+    controlOut->extra2 = extra2;
+    controlOut->extra3 = extra3;
 }
 
 /**
@@ -261,6 +286,11 @@ int determine_R_Type(InstructionFields *fields, CPUControl *controlOut) {
         case 0x2a:      // slt Function Hex
             writeControlOut(controlOut, 0, 3, 1, 0, 0, 0, 1, 1, 0, 0);
             break;
+        case 0x27:      // nor Function Hex
+            writeControlOut(controlOut, 0, 5, 0, 0, 0, 0, 1, 1, 0, 0);
+            break;
+        case 0x18:      // mult Function Hex
+            writeControlOut(controlOut, 0, 6, 0, 0, 0, 0, 1, 1, 0, 0);
         default:
             return 0;           // Unknown instruction
     }
@@ -296,16 +326,8 @@ void determine_I_Type(InstructionFields *fields, CPUControl *controlOut) {
         case 0x2:       // j-Opcode
             writeControlOut(controlOut, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1);
             break;
-        // Part 2 Extras
-        // FIXME: WHY DON'T YOU WORK:LKHJA:OFIHDSF:LK j;l kg
-        case 0x28:      // sb Function Hex
-            writeControlOut(controlOut, 1, 2, 0, 0, 1, 0, 0, 0, 0, 0);
-            break;
-        case 0x05:      // bne Function Hex
-            writeControlOut(controlOut, 0, 2, 1, 0, 0, 0, 0, 1, 1, 0);
-            break;
-        case 0x20:      // lb Function Hex
-            writeControlOut(controlOut, 1, 2, 0, 1, 0, 1, 0, 1, 0, 0);
-            break;
+            // Part 2 Extras
+        case 0xc:       // andi-Opcode
+            writeControlOutExtra(controlOut, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0);
     }
 }
