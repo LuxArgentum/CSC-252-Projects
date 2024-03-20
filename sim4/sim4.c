@@ -55,7 +55,6 @@ int fill_CPUControl(InstructionFields *fields, CPUControl *controlOut) {
         case 0x4:               // beq-Opcode
         case 0x2:               // j-Opcode
         case 0x05:              // bne Function Hex
-        case 0x20:              // lb Function Hex
         case 0xc:               // andi-Opcode
             determine_I_Type(fields, controlOut);
             break;
@@ -78,6 +77,9 @@ WORD getALUinput1(CPUControl *controlIn,
                   WORD rsVal, WORD rtVal, WORD reg32, WORD reg33,
                   WORD oldPC) {
 
+    if (controlIn->ALUsrc == 2) {
+        return rtVal;
+    }
     return rsVal;
 }
 
@@ -92,7 +94,10 @@ WORD getALUinput2(CPUControl *controlIn,
         return rtVal;
     } else if (controlIn->extra1 == 1) {
         return (WORD) fieldsIn->imm16;  // Zero-extend the 16-bit immediate to 32 bits.
-    } else {
+    } else if (controlIn->ALUsrc == 2) {
+        return fieldsIn->shamt;
+    }
+    else {
         return fieldsIn->imm32;
     }
 }
@@ -131,11 +136,8 @@ void execute_ALU(CPUControl *controlIn,
         case 4: // XOR
             aluResultOut->result = input1 ^ input2;
             break;
-        case 5: // NOR
-            aluResultOut->result = ~(input1 | input2);
-            break;
-        case 6: // MULT
-            aluResultOut->result = input1 * input2;
+        case 5: // Shift left
+            aluResultOut->result = input1 << input2;
             break;
         default:
             // Invalid ALU operation
@@ -179,11 +181,14 @@ WORD getNextPC(InstructionFields *fields, CPUControl *controlIn, int aluZero,
     if (controlIn->branch && aluZero) {
         return oldPC + 4 + (fields->imm32 << 2);
     }
-        // If the jump control bit is set, jump to the address specified by the address field
+    if (controlIn->extra2 == 1 && !aluZero) {
+        return oldPC + 4 + (fields->imm32 << 2);
+    }
+// If the jump control bit is set, jump to the address specified by the address field
     else if (controlIn->jump) {
         return (oldPC & 0xf0000000) | (fields->address << 2);
     }
-        // Otherwise, just go to the next instruction in memory
+// Otherwise, just go to the next instruction in memory
     else {
         return oldPC + 4;
     }
@@ -265,7 +270,9 @@ writeControlOutExtra(CPUControl *controlOut, int ALUsrc, int ALUop, int bNegate,
 int determine_R_Type(InstructionFields *fields, CPUControl *controlOut) {
 
     switch (fields->funct) {
-
+        case 0:         // sll Function Hex
+            writeControlOutExtra(controlOut, 2, 5, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1);
+            break;
         case 0x20:      // add Function Hex
         case 0x21:      // addu Function Hex
             writeControlOut(controlOut, 0, 2, 0, 0, 0, 0, 1, 1, 0, 0);
@@ -285,9 +292,6 @@ int determine_R_Type(InstructionFields *fields, CPUControl *controlOut) {
             break;
         case 0x2a:      // slt Function Hex
             writeControlOut(controlOut, 0, 3, 1, 0, 0, 0, 1, 1, 0, 0);
-            break;
-        case 0x27:      // nor Function Hex
-            writeControlOut(controlOut, 0, 5, 0, 0, 0, 0, 1, 1, 0, 0);
             break;
         case 0x18:      // mult Function Hex
             writeControlOut(controlOut, 0, 6, 0, 0, 0, 0, 1, 1, 0, 0);
@@ -327,6 +331,9 @@ void determine_I_Type(InstructionFields *fields, CPUControl *controlOut) {
             writeControlOut(controlOut, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1);
             break;
             // Part 2 Extras
+        case 0x5:       // bne-Opcode
+            writeControlOutExtra(controlOut, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0);
+            break;
         case 0xc:       // andi-Opcode
             writeControlOutExtra(controlOut, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0);
     }
