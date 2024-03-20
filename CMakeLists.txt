@@ -8,17 +8,17 @@ include_directories(sim4)
 add_executable(CSC_252_Projects
         sim4/sim4.c
         sim4/extra_testcases/test_extraInst_ANDI.c
-        sim4/extra_testcases/test_extraInst_BNE.c
+        sim4/test_extraInst_BNE.c
         sim4/extra_testcases/test_extraInst_DIV_MFHI.c
         sim4/extra_testcases/test_extraInst_DIV_MFLO.c
-        sim4/extra_testcases/test_extraInst_LB.c
+        sim4/test_extraInst_LB.c
         sim4/extra_testcases/test_extraInst_LUI.c
         sim4/extra_testcases/test_extraInst_MUL.c
         sim4/extra_testcases/test_extraInst_MULT_MFHI.c
         sim4/extra_testcases/test_extraInst_MULT_MFLO.c
         sim4/extra_testcases/test_extraInst_NOR.c
         sim4/extra_testcases/test_extraInst_ORI.c
-        sim4/extra_testcases/test_extraInst_SB.c
+        sim4/test_extraInst_SB.c
         sim4/extra_testcases/test_extraInst_SLL.c
         sim4/extra_testcases/test_extraInst_SLLV.c
         sim4/extra_testcases/test_extraInst_SLTI.c
@@ -49,5 +49,5 @@ add_executable(CSC_252_Projects
         sim4/test_20_ADD_SUB_ADDI.c
         sim4/test_21_AND_OR_XOR.c
         sim4/test_22_SLT_SLTI.c
-        sim4/test_milestone1_02_executeControl1.c
-        sim4/test_milestone1_03_executeControl2.c)
+        sim4/ignored_testcases/test_milestone1_02_executeControl1.c
+        sim4/ignored_testcases/test_milestone1_03_executeControl2.c)
