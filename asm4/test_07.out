@@ -1,0 +1,58 @@
+Turtle "Bigfoot"
+  pos 0,0
+  dir North
+  odometer 0
+
+Turtle "Bigfoot"
+  pos 0,2
+  dir North
+  odometer 2
+
+Turtle "Bigfoot"
+  pos 0,-8
+  dir North
+  odometer 12
+
+Turtle "Bigfoot"
+  pos 0,-6
+  dir North
+  odometer 14
+
+c608ace9
+00
+fa
+00
+00
+42
+69
+67
+66
+0e
+00
+00
+00
+46fb1a13
+
+Turtle "Bigfoot"
+  pos 0,-6
+  dir North
+  odometer 14
+
+
++-----------------------------------------------------------+
+|    Magic Value (popped from the stack):                   |
++-----------------------------------------------------------+
+02236aa7
+
++-----------------------------------------------------------+
+|    Testcase Register Dump (fp, then 8 sX regs):           |
++-----------------------------------------------------------+
+6a0765b0
+53615d64
+26681c98
+107a6c25
+ba535d9b
+d72a027e
+8f5607bc
+1059c443
+3440ab24
