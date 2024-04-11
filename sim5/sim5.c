@@ -47,13 +47,28 @@ int IDtoIF_get_stall(InstructionFields *fields, ID_EX *old_idex, EX_MEM *old_exm
      instruction), return 0 from this function.
      */
 
-    bool check1 = fields->rs == old_exmem->writeReg && old_exmem->regWrite && old_exmem->memRead;
-    bool check2 = fields->rt == old_exmem->writeReg && old_exmem->regWrite && old_exmem->memRead;
+    // Check if the previous instruction is a load and if the current instruction depends on its result
+    if (old_idex->memRead) {
+        int needsRs = 1;
+        if (fields->opcode == 0x23) {  // lw opcode
+            needsRs = 0;  // lw does not use rs
+        }
+        int needsRt = 1;
+        if (fields->opcode == 0x2b) {  // sw opcode
+            needsRt = 0;  // sw does not use rt
+        }
 
-    if (check1 || check2) {
-        return 1;  // Stall is needed
+        // Modify these conditions based on your instruction set and pipeline design
+        if ((needsRs && fields->rs == old_idex->rt && old_idex->rt != 0) ||  // Check rs against EX stage's rt
+            (needsRt && fields->rt == old_idex->rt && old_idex->rt != 0)) {  // Check rt against EX stage's rt
+            return 1;  // Stall needed due to load-use hazard with the EX stage.
+        }
     }
-    return 0;  // No stall is needed
+
+// Additional checks could be added here if there are specific cases where old_exmem requires stalling,
+// especially if not covered by forwarding.
+
+    return 0;  // No stall needed.
 }
 
 int IDtoIF_get_branchControl(InstructionFields *fields, WORD rsVal, WORD rtVal) {
@@ -165,16 +180,21 @@ int execute_ID(int IDstall, InstructionFields *fieldsIn, WORD pcPlus4, WORD rsVa
      * */
 
     if (IDstall) {
-        writeControlOutExtra(new_idex, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        writeControlOutExtra(new_idex, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        clearRegisters(new_idex);
         return 1;
     }
 
     new_idex->rs = fieldsIn->rs;
     new_idex->rt = fieldsIn->rt;
     new_idex->rd = fieldsIn->rd;
-
     new_idex->rsVal = rsVal;
     new_idex->rtVal = rtVal;
+    new_idex->imm16 = fieldsIn->imm16;
+    new_idex->imm32 = fieldsIn->imm32;
+    new_idex->extra1 = 0;
+    new_idex->extra2 = 0;
+    new_idex->extra3 = 0;
 
 //     Finding instructions based on the opcode
     switch (fieldsIn->opcode) {
@@ -374,7 +394,7 @@ WORD EX_getALUinput1(ID_EX *in, EX_MEM *old_exMem, MEM_WB *old_memWb) {
         if (check4) {
             return old_memWb->memResult;
         }
-        return in->rtVal;
+        return in->rsVal;
     }
     if (check1) {
         return old_exMem->aluResult;
@@ -411,6 +431,19 @@ WORD EX_getALUinput2(ID_EX *in, EX_MEM *old_exMem, MEM_WB *old_memWb) {
 }
 
 void execute_EX(ID_EX *in, WORD input1, WORD input2, EX_MEM *new_exMem) {
+
+    new_exMem->rt = in->rt;
+    new_exMem->rtVal = in->rtVal;
+    new_exMem->memRead = in->memRead;
+    new_exMem->memWrite = in->memWrite;
+    new_exMem->memToReg = in->memToReg;
+    new_exMem->writeReg = in->rd;
+    new_exMem->regWrite = in->regWrite;
+
+    if (in->ALUsrc == 1 || in->ALUsrc == 2) {
+        new_exMem->writeReg = in->rt;
+    }
+
     // Initialize the result and zero in of aluResultOut
     new_exMem->aluResult = 0;
 //    new_exMem->zero = 0;
@@ -441,24 +474,19 @@ void execute_EX(ID_EX *in, WORD input1, WORD input2, EX_MEM *new_exMem) {
         case 4: // XOR
             new_exMem->aluResult = input1 ^ input2;
             break;
-        case 5: // NOP TODO: Check if NOP works
+        case 5: // NOP
             new_exMem->aluResult = 0;
             break;
         case 6: // Mult
             new_exMem->aluResult = input1 * input2;
             break;
-        case 7: // Shift Left Logical TODO: Check that SLL works
+        case 7: // Shift Left Logical
             new_exMem->aluResult = input1 << input2;
             break;
         default:
             // Invalid ALU operation
             break;
     }
-
-//    // Set the zero field of aluResultOut
-//    if (new_exMem->aluResult == 0) {
-//        new_exMem->zero = 1;
-//    }
 }
 
 void execute_MEM(EX_MEM *in, MEM_WB *old_memWb, WORD *mem, MEM_WB *new_memwb) {
