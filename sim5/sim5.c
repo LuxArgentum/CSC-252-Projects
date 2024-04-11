@@ -39,7 +39,7 @@ int IDtoIF_get_stall(InstructionFields *fields, ID_EX *old_idex, EX_MEM *old_exm
     
      The parameters are the Fields of the current instruction, plus the ID/EX
      and EX/MEM pipeline registers, for the two instructions ahead. This
-     function must not modify any of these fields - simply query to determine
+     function must not modify any of these in - simply query to determine
      if a stall is required.
      If a stall is required, then the IF phase will also stall; that is, you will see
      this instruction repeated on the next clock cycle.
@@ -47,13 +47,10 @@ int IDtoIF_get_stall(InstructionFields *fields, ID_EX *old_idex, EX_MEM *old_exm
      instruction), return 0 from this function.
      */
 
-    // Check if the instruction in the ID stage is dependent on the instruction in the EX or MEM stage
-    bool check1 = fields->rs == old_idex->rd && old_idex->regWrite;
-    bool check2 = fields->rt == old_idex->rd && old_idex->regWrite;
-    bool check3 = fields->rs == old_exmem->writeReg && old_exmem->regWrite;
-    bool check4 = fields->rt == old_exmem->writeReg && old_exmem->regWrite;
+    bool check1 = fields->rs == old_exmem->writeReg && old_exmem->regWrite && old_exmem->memRead;
+    bool check2 = fields->rt == old_exmem->writeReg && old_exmem->regWrite && old_exmem->memRead;
 
-    if (check1 || check2 || check3 || check4) {
+    if (check1 || check2) {
         return 1;  // Stall is needed
     }
     return 0;  // No stall is needed
@@ -162,8 +159,8 @@ int execute_ID(int IDstall, InstructionFields *fieldsIn, WORD pcPlus4, WORD rsVa
     /*
      * This function implements the core of the ID phase. Its first parameter is the stall setting (exactly what you
      * returned from IDtoIF get stall()). The next is the Fields for this instruction, followed by the rsVal and rtVal;
-     * last is a pointer to the (new) ID/EX pipeline register. Decode the opcode and funct, and set all of the fields of
-     * the ID EX struct. (I don’t define how you might use the extra* fields.) As in Sim 4, you will return 1 if you
+     * last is a pointer to the (new) ID/EX pipeline register. Decode the opcode and funct, and set all of the in of
+     * the ID EX struct. (I don’t define how you might use the extra* in.) As in Sim 4, you will return 1 if you
      * recognize the opcode/funct; return 0 if it is an invalid instruction.
      * */
 
@@ -329,16 +326,9 @@ int determine_I_Type(InstructionFields *fieldsIn, ID_EX *new_idex) {
             writeControlOut(new_idex, 1, 2, 0, 0, 1, 0, 0, 0);
             break;
         case 0x4:       // beq-Opcode
-            writeControlOut(new_idex, 0, 0, 0, 0, 0, 0, 0, 0);
-            clearRegisters(new_idex);
-            break;
         case 0x2:       // j-Opcode
-            writeControlOut(new_idex, 0, 0, 0, 0, 0, 0, 0, 0);
-            clearRegisters(new_idex);
-            break;
-            // Part 2 Extras
         case 0x5:       // bne-Opcode
-            writeControlOutExtra(new_idex, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+            writeControlOut(new_idex, 0, 0, 0, 0, 0, 0, 0, 0);
             clearRegisters(new_idex);
             break;
         case 0xc:       // andi-Opcode
@@ -371,16 +361,44 @@ void clearRegisters(ID_EX *in) {
 }
 
 WORD EX_getALUinput1(ID_EX *in, EX_MEM *old_exMem, MEM_WB *old_memWb) {
+    // Check if the instruction in the ID stage is dependent on the instruction in the EX or MEM stage
+    bool check1 = in->rs == old_exMem->writeReg && old_exMem->regWrite;
+    bool check2 = in->rt == old_exMem->writeReg && old_exMem->regWrite;
+    bool check3 = in->rs == old_memWb->writeReg && old_memWb->regWrite;
+    bool check4 = in->rt == old_memWb->writeReg && old_memWb->regWrite;
+
     if (in->ALUsrc == 2) {
+        if (check2) {
+            return old_exMem->aluResult;
+        }
+        if (check4) {
+            return old_memWb->memResult;
+        }
         return in->rtVal;
+    }
+    if (check1) {
+        return old_exMem->aluResult;
+    }
+    if (check3) {
+        return old_memWb->memResult;
     }
     return in->rsVal;
 }
 
 WORD EX_getALUinput2(ID_EX *in, EX_MEM *old_exMem, MEM_WB *old_memWb) {
+    // Check if the instruction in the ID stage is dependent on the instruction in the EX or MEM stage
+    bool check2 = in->rt == old_exMem->writeReg && old_exMem->regWrite;
+    bool check4 = in->rt == old_memWb->writeReg && old_memWb->regWrite;
+
     // If ALUsrc is 0, the second input to the ALU is the value of the rt register
     // Otherwise, it's the immediate value from the instruction
     if (in->ALUsrc == 0) {
+        if (check2) {
+            return old_exMem->aluResult;
+        }
+        if (check4) {
+            return old_memWb->memResult;
+        }
         return in->rtVal;
     } else if (in->ALUsrc == 1) {
         return in->imm32;
@@ -393,7 +411,7 @@ WORD EX_getALUinput2(ID_EX *in, EX_MEM *old_exMem, MEM_WB *old_memWb) {
 }
 
 void execute_EX(ID_EX *in, WORD input1, WORD input2, EX_MEM *new_exMem) {
-    // Initialize the result and zero fields of aluResultOut
+    // Initialize the result and zero in of aluResultOut
     new_exMem->aluResult = 0;
 //    new_exMem->zero = 0;
 
@@ -479,19 +497,19 @@ void execute_WB(MEM_WB *in, WORD *regs) {
 }
 
 ///**
-// * Fills out the CPUControl based on the instruction fields.
+// * Fills out the CPUControl based on the instruction in.
 // *
-// * @param fields        The instruction fields.
+// * @param in        The instruction in.
 // * @param controlOut    The CPUControl to fill out.
 // * @return              Returns 1 if the instruction is recognized, and 0 if the opcode or function is not recognized.
 // */
-//int fill_CPUControl(InstructionFields *fields, CPUControl *controlOut) {
+//int fill_CPUControl(InstructionFields *in, CPUControl *controlOut) {
 //
 //    // Finding instructions based on the opcode
-//    switch (fields->opcode) {
+//    switch (in->opcode) {
 //
 //        case 0:                 // R-Type-Opcode
-//            return determine_R_Type(fields, controlOut);
+//            return determine_R_Type(in, controlOut);
 //            // I-Type Opcodes
 //        case 0x8:               // addi-Opcode
 //        case 0x9:               // addiu-Opcode
@@ -502,7 +520,7 @@ void execute_WB(MEM_WB *in, WORD *regs) {
 //        case 0x2:               // j-Opcode
 //        case 0x05:              // bne Function Hex
 //        case 0xc:               // andi-Opcode
-//            determine_I_Type(fields, controlOut);
+//            determine_I_Type(in, controlOut);
 //            break;
 //            // Unknown Opcode
 //        default:
@@ -551,7 +569,7 @@ void execute_WB(MEM_WB *in, WORD *regs) {
 //                 WORD input1, WORD input2,
 //                 ALUResult *aluResultOut) {
 //
-//    // Initialize the result and zero fields of aluResultOut
+//    // Initialize the result and zero in of aluResultOut
 //    aluResultOut->result = 0;
 //    aluResultOut->zero = 0;
 //
@@ -618,20 +636,20 @@ void execute_WB(MEM_WB *in, WORD *regs) {
 //    }
 //}
 
-//WORD getNextPC(InstructionFields *fields, CPUControl *controlIn, int aluZero,
+//WORD getNextPC(InstructionFields *in, CPUControl *controlIn, int aluZero,
 //               WORD rsVal, WORD rtVal,
 //               WORD oldPC) {
 //
 //    // If the branch control bit is set and the ALU zero output is true, branch to the address specified by the immediate field
 //    if (controlIn->branch && aluZero) {
-//        return oldPC + 4 + (fields->imm32 << 2);
+//        return oldPC + 4 + (in->imm32 << 2);
 //    }
 //    if (controlIn->extra2 == 1 && !aluZero) {
-//        return oldPC + 4 + (fields->imm32 << 2);
+//        return oldPC + 4 + (in->imm32 << 2);
 //    }
 //// If the jump control bit is set, jump to the address specified by the address field
 //    else if (controlIn->jump) {
-//        return (oldPC & 0xf0000000) | (fields->address << 2);
+//        return (oldPC & 0xf0000000) | (in->address << 2);
 //    }
 //// Otherwise, just go to the next instruction in memory
 //    else {
@@ -639,7 +657,7 @@ void execute_WB(MEM_WB *in, WORD *regs) {
 //    }
 //}
 
-//void execute_updateRegs(InstructionFields *fields, CPUControl *controlIn,
+//void execute_updateRegs(InstructionFields *in, CPUControl *controlIn,
 //                        ALUResult *aluResultIn, MemResult *memResultIn,
 //                        WORD *regs) {
 //
@@ -648,9 +666,9 @@ void execute_WB(MEM_WB *in, WORD *regs) {
 //        // Determine the destination register
 //        int destReg;
 //        if (controlIn->regDst) {
-//            destReg = fields->rd;
+//            destReg = in->rd;
 //        } else {
-//            destReg = fields->rt;
+//            destReg = in->rt;
 //        }
 //
 //        // If memToReg is set, write the value read from memory to the register
