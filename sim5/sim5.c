@@ -10,6 +10,8 @@ writeControlOutExtra(ID_EX *new_idex, int ALUsrc, int ALUop, int bNegate, int me
                      int memToReg,
                      int regDst, int regWrite, int extra1, int extra2, int extra3);
 
+void clearRegisters(ID_EX *in);
+
 /**
  * Extracts the fields from the given instruction.
  *
@@ -107,9 +109,14 @@ int IDtoIF_get_branchControl(InstructionFields *fields, WORD rsVal, WORD rtVal) 
     // Check if the opcode indicates a branch or jump instruction
     switch (fields->opcode) {
         case 0x4:  // beq opcode
-        case 0x5:  // bne opcode
             // If rsVal is equal to rtVal, return 1 to indicate a branch to the relative destination
             if (rsVal == rtVal) {
+                return 1;
+            }
+            break;
+        case 0x5:  // bne opcode
+            // If rsVal is not equal to rtVal, return 1 to indicate a branch to the relative destination
+            if (rsVal != rtVal) {
                 return 1;
             }
             break;
@@ -160,9 +167,15 @@ int execute_ID(int IDstall, InstructionFields *fieldsIn, WORD pcPlus4, WORD rsVa
      * recognize the opcode/funct; return 0 if it is an invalid instruction.
      * */
 
+    if (IDstall) {
+        writeControlOutExtra(new_idex, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        return 1;
+    }
+
     new_idex->rs = fieldsIn->rs;
     new_idex->rt = fieldsIn->rt;
     new_idex->rd = fieldsIn->rd;
+
     new_idex->rsVal = rsVal;
     new_idex->rtVal = rtVal;
 
@@ -316,14 +329,17 @@ int determine_I_Type(InstructionFields *fieldsIn, ID_EX *new_idex) {
             writeControlOut(new_idex, 1, 2, 0, 0, 1, 0, 0, 0);
             break;
         case 0x4:       // beq-Opcode
-            writeControlOut(new_idex, 0, 2, 1, 0, 0, 0, 0, 0);
+            writeControlOut(new_idex, 0, 0, 0, 0, 0, 0, 0, 0);
+            clearRegisters(new_idex);
             break;
         case 0x2:       // j-Opcode
             writeControlOut(new_idex, 0, 0, 0, 0, 0, 0, 0, 0);
+            clearRegisters(new_idex);
             break;
             // Part 2 Extras
         case 0x5:       // bne-Opcode
-            writeControlOutExtra(new_idex, 0, 2, 1, 0, 0, 0, 0, 0, 0, 1, 0);
+            writeControlOutExtra(new_idex, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+            clearRegisters(new_idex);
             break;
         case 0xc:       // andi-Opcode
             writeControlOutExtra(new_idex, 2, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0);
@@ -344,6 +360,14 @@ int determine_I_Type(InstructionFields *fieldsIn, ID_EX *new_idex) {
             return 0;           // Unknown instruction
     }
     return 1;               // Success
+}
+
+void clearRegisters(ID_EX *in) {
+    in->rs = 0;
+    in->rt = 0;
+    in->rd = 0;
+    in->rsVal = 0;
+    in->rtVal = 0;
 }
 
 WORD EX_getALUinput1(ID_EX *in, EX_MEM *old_exMem, MEM_WB *old_memWb) {
