@@ -37,3 +37,24 @@ countLetters:
 
 subsCipher:
 
+# Calculate the size of the array needed
+# Round length up to the nearest multiple of 4
+# Allocate an array of that size one the stack
+
+# Receive char *str and char *map
+
+# Get len of str with strLen and add 1 to the output it returns (int len = strLen(str) + 1)
+
+# Round up the length to the nearest multiple of 4 (int len4 = (len + 3) & ~0x3)
+
+# Make a duplicate string with the length of len4 
+
+# Iterate over every character in the original string
+
+# Add the map value of each character to the duplicate string
+
+# At the end of the string, add the null terminator
+
+# Print the string
+
+strLen: # Calculate the length of the string
