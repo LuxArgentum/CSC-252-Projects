@@ -50,4 +50,6 @@ add_executable(CSC_252_Projects
         sim4/test_21_AND_OR_XOR.c
         sim4/test_22_SLT_SLTI.c
         sim4/ignored_testcases/test_milestone1_02_executeControl1.c
-        sim4/ignored_testcases/test_milestone1_03_executeControl2.c)
+        sim4/ignored_testcases/test_milestone1_03_executeControl2.c
+        sim5/sim5.c
+        sim5/sim5.h)
