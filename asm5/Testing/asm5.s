@@ -53,19 +53,11 @@ countLetters:                                           # countLetters(char *str
     sw      $zero,              96($sp)
     sw      $zero,              100($sp)
 
-    # Get the string argument (char *str)
-
     add     $t0,                $zero,      $a0         # char *str = a0
-
-    # Register for current character (char *cur = str)
 
     add     $t1,                $t0,        $zero       # char *cur = str;
 
-    # A register with zero? (int other = 0)
-
     add     $t2,                $zero,      $zero       # int other = 0;
-
-    # Print the Dash Start, the argument string, and the Dash End (char *str)
 
     # Print the Dash Start
 
@@ -85,14 +77,11 @@ countLetters:                                           # countLetters(char *str
     la      $a0,                DASH_END
     syscall 
 
-    # While current does not equal end line (\0)
 
-count_loop: 
+count_loop:                                             # While current does not equal end line (\0)
 
     lb      $t9,                0($t1)                  # Load byte at address in $t1
     beq     $t9,                $zero,      count_end   # Compare byte to zero
-
-    # beq     $t1,                $zero,      count_end
 
     # If *cur >= a and *cur =< z
 
@@ -111,14 +100,15 @@ count_loop:
     lb      $t9,                0($t1)                  # Load the character pointed by $t1
 
     addi    $t6,                $t9,        -0x61       # $t6 = *cur - 'a'
+    sll     $t6,                $t6,        2           # $t6 = $t6 * 4 (each int is 4 bytes)
 
     add     $t7,                $sp,        $t6         # $t7 = &stack[*cur - 'a']
 
-    lb      $t6,                0($t7)                  # $t6 = stack[*cur - 'a']
+    lw      $t6,                0($t7)                  # $t6 = stack[*cur - 'a']
 
     addi    $t6,                $t6,        1           # stack[*cur - 'a']++
 
-    sb      $t6,                0($t7)                  # stack[*cur - 'a'] = $t6
+    sw      $t6,                0($t7)                  # stack[*cur - 'a'] = $t6
 
     j       count_increment                             # Jump to count_increment
 
@@ -129,7 +119,7 @@ count_upper:
     addi    $t8,                $zero,      0x5A
 
     slti    $t3,                $t1,        0x41        # $t3 = *cur < 'A'
-    slt     $t4,                $t8,        $t1         # $t4 = *cur > 'Z'
+    slt     $t4,                $t8,        $t9         # $t4 = *cur > 'Z'
 
     or      $t5,                $t3,        $t4         # $t5 = $t3 || $t4
 
@@ -141,7 +131,7 @@ count_upper:
 
     add     $t7,                $sp,        $t6         # $t7 = &stack[*cur - 'a']
 
-    lw      $t6,                0($t7)                  # $t6 = stack[*cur - 'a']
+    lb      $t6,                0($t7)                  # $t6 = stack[*cur - 'a']
 
     addi    $t6,                $t6,        1           # stack[*cur - 'a']++
 
@@ -173,12 +163,25 @@ count_end:
     add     $t0,                $zero,      $sp
     add     $t1,                $zero,      $zero
     addi    $t3,                $zero,      26
+    addi    $t4,                $zero,      0x61
 
 print_loop: 
 
-    slt     $t4,                $t1,        $t3         # $t4 = $t1 < 26
+    slt     $t5,                $t1,        $t3         # $t4 = $t1 < 26
 
-    beq     $t4,                $zero,      print_end   # if !($t4 < 26), jump to print_end
+    beq     $t5,                $zero,      print_end   # if !($t4 < 26), jump to print_end
+
+    # Print the letter
+
+    addi    $v0,                $zero,      11
+    add     $a0,                $zero,      $t4
+    syscall 
+
+    addi    $v0,                $zero,      4
+    la      $a0,                CHAR_PRINT
+    syscall 
+
+    # Print the count
 
     addi    $v0,                $zero,      1
     lw      $a0,                0($t0)
@@ -190,6 +193,7 @@ print_loop:
 
     addi    $t1,                $t1,        1
     addi    $t0,                $t0,        4
+    addi    $t4,                $t4,        1
 
     j       print_loop
 
