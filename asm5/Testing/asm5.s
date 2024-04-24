@@ -4,6 +4,7 @@ DASH_START: .asciiz "----------------\n"                # String to print before
 DASH_END:   .asciiz "\n----------------\n"              # String to print after the argument string
 NEWLINE:    .asciiz "\n"                                # Newline string
 CHAR_PRINT: .asciiz ": "                                # Format string for printing a character
+OTHER:      .asciiz "<other>: "                         # String to print before the count of other characters
 
             .globl  countLetters
             .globl  subsCipher
@@ -19,15 +20,13 @@ countLetters:                                           # countLetters(char *str
     # Make a stack with enough room for 26 letters
     # 26 integers x 4 bytes each = 104 bytes
 
-    addiu   $sp,                $sp,        -104        # Allocate 104 bytes on the stack
+    addiu   $sp,                $sp,        -112        # Allocate 104 bytes on the stack
     sw      $fp,                0($sp)                  # Save $fp to the stack
     sw      $ra,                4($sp)                  # Save $ra to the stack
-    addiu   $fp,                $sp,        100         # Set $fp to the top of the stack
+    addiu   $fp,                $sp,        108         # Set $fp to the top of the stack
 
     # Fill the stack with zeros
 
-    sw      $zero,              0($sp)
-    sw      $zero,              4($sp)
     sw      $zero,              8($sp)
     sw      $zero,              12($sp)
     sw      $zero,              16($sp)
@@ -52,6 +51,8 @@ countLetters:                                           # countLetters(char *str
     sw      $zero,              92($sp)
     sw      $zero,              96($sp)
     sw      $zero,              100($sp)
+    sw      $zero,              104($sp)
+    sw      $zero,              108($sp)
 
     add     $t0,                $zero,      $a0         # char *str = a0
 
@@ -100,10 +101,12 @@ count_loop:                                             # While current does not
     lb      $t9,                0($t1)                  # Load the character pointed by $t1
 
     addi    $t6,                $t9,        -0x61       # $t6 = *cur - 'a'
-    
+
     sll     $t6,                $t6,        2           # $t6 = $t6 * 4 (each int is 4 bytes)
 
     add     $t7,                $sp,        $t6         # $t7 = &stack[*cur - 'a']
+
+    addi    $t7,                $t7,        8           # Shift 8 bytes to get to the first integer
 
     lw      $t6,                0($t7)                  # $t6 = stack[*cur - 'a']
 
@@ -119,7 +122,7 @@ count_upper:
 
     addi    $t8,                $zero,      0x5A
 
-    slti    $t3,                $t1,        0x41        # $t3 = *cur < 'A'
+    slti    $t3,                $t9,        0x41        # $t3 = *cur < 'A'
 
     slt     $t4,                $t8,        $t9         # $t4 = *cur > 'Z'
 
@@ -136,6 +139,8 @@ count_upper:
     sll     $t6,                $t6,        2           # $t6 = $t6 * 4 (each int is 4 bytes)
 
     add     $t7,                $sp,        $t6         # $t7 = &stack[*cur - 'a']
+
+    addi    $t7,                $t7,        8           # Shift 8 bytes to get to the first integer
 
     lw      $t6,                0($t7)                  # $t6 = stack[*cur - 'a']
 
@@ -167,6 +172,7 @@ count_end:
     # Print the letter and the number of times it appears
 
     add     $t0,                $zero,      $sp
+    addi    $t0,                $t0,        8
     add     $t1,                $zero,      $zero
     addi    $t3,                $zero,      26
     addi    $t4,                $zero,      0x61
@@ -207,6 +213,10 @@ print_end:
 
     # Print the other count
 
+    addi    $v0,                $zero,      4
+    la      $a0,                OTHER
+    syscall 
+
     addi    $v0,                $zero,      1
     add     $a0,                $zero,      $t2
     syscall 
@@ -217,42 +227,46 @@ print_end:
 
     # Restore the stack
 
-    lw      $fp,                0($sp)                  # Restore $fp from the stack
     lw      $ra,                4($sp)                  # Restore $ra from the stack
-    addiu   $sp,                $sp,        104         # Deallocate 104 bytes from the stack
+    lw      $fp,                0($sp)                  # Restore $fp from the stack
+    addiu   $sp,                $sp,        112         # Deallocate 104 bytes from the stack
     jr      $ra                                         # Return
 
 subsCipher: 
 
-    # Calculate the size of the array needed
-    # Round length up to the nearest multiple of 4
-    # Allocate an array of that size on the stack
-
-    addiu   $sp,                $sp,        -24         # Allocate 104 bytes on the stack
+    # Save the current frame pointer and return address
+    addiu   $sp,                $sp,        -24         # Allocate 24 bytes on the stack, adjust this value based on actual usage
     sw      $fp,                0($sp)                  # Save $fp to the stack
     sw      $ra,                4($sp)                  # Save $ra to the stack
     addiu   $fp,                $sp,        20          # Set $fp to the top of the stack
 
-    # Round length up to the nearest multiple of 4
-    # Allocate an array of that size one the stack
+    # Compute the length of the input string including null terminator
 
-    # Get len of str with strLen and add 1 to the output it returns (int len = strLen(str) + 1)
+    jal     strlen                                      # Calculate length of string
+    addiu   $v0,                $v0,        1           # Include space for null terminator
 
-    # Round up the length to the nearest multiple of 4 (int len4 = (len + 3) & ~0x3)
-
-    # Make a duplicate string with the length of len4
-
-    # Iterate over every character in the original string
-
-    # Add the map value of each character to the duplicate string
-
-    # At the end of the string, add the null terminator
-
-    # Print the string
-
+    # Restore the stack and return
     lw      $ra,                4($sp)                  # Restore $ra from the stack
     lw      $fp,                0($sp)                  # Restore $fp from the stack
-    addiu   $sp,                $sp,        24          # Deallocate 104 bytes from the stack
+    addiu   $sp,                $sp,        24          # Deallocate 24 bytes from the stack
     jr      $ra                                         # Return
 
-strLen:                                                 # Calculate the length of the string
+    # Function to calculate string length
+strlen:                                                 # strlen(char *str)
+
+    add     $t0,                $zero,      $a0         # char *str = a0
+    addi    $t1,                $zero,      0           # int len = 0
+
+strlen_loop:
+
+    lb      $t2,                0($t0)                  # Load byte at address in $t0
+    beq     $t2,                $zero,      strlen_end  # Compare byte to zero
+
+    addi    $t1,                $t1,        1           # Increment len
+    addi    $t0,                $t0,        1           # Increment str
+    j       strlen_loop                                 # Jump back to the while loop
+
+strlen_end: 
+
+    add     $v0,                $zero,      $t1         # Return len
+    jr      $ra                                         # Return
