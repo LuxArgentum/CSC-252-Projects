@@ -100,6 +100,7 @@ count_loop:                                             # While current does not
     lb      $t9,                0($t1)                  # Load the character pointed by $t1
 
     addi    $t6,                $t9,        -0x61       # $t6 = *cur - 'a'
+    
     sll     $t6,                $t6,        2           # $t6 = $t6 * 4 (each int is 4 bytes)
 
     add     $t7,                $sp,        $t6         # $t7 = &stack[*cur - 'a']
@@ -119,6 +120,7 @@ count_upper:
     addi    $t8,                $zero,      0x5A
 
     slti    $t3,                $t1,        0x41        # $t3 = *cur < 'A'
+
     slt     $t4,                $t8,        $t9         # $t4 = *cur > 'Z'
 
     or      $t5,                $t3,        $t4         # $t5 = $t3 || $t4
@@ -127,11 +129,15 @@ count_upper:
 
     # Increment the stack at *cur - A
 
-    addi    $t6,                $t1,        -0x41       # $t6 = *cur - 'A'
+    lb      $t9,                0($t1)                  # Load the character pointed by $t1
+
+    addi    $t6,                $t9,        -0x41       # $t6 = *cur - 'a'
+
+    sll     $t6,                $t6,        2           # $t6 = $t6 * 4 (each int is 4 bytes)
 
     add     $t7,                $sp,        $t6         # $t7 = &stack[*cur - 'a']
 
-    lb      $t6,                0($t7)                  # $t6 = stack[*cur - 'a']
+    lw      $t6,                0($t7)                  # $t6 = stack[*cur - 'a']
 
     addi    $t6,                $t6,        1           # stack[*cur - 'a']++
 
