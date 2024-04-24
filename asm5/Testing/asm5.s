@@ -3,6 +3,7 @@
 DASH_START: .asciiz "----------------\n"                # String to print before the argument string
 DASH_END:   .asciiz "\n----------------\n"              # String to print after the argument string
 NEWLINE:    .asciiz "\n"                                # Newline string
+CHAR_PRINT: .asciiz ": "                                # Format string for printing a character
 
             .globl  countLetters
             .globl  subsCipher
@@ -95,26 +96,29 @@ count_loop:
 
     # If *cur >= a and *cur =< z
 
-    addi    $t8,                $zero,      0x7A
+    addi    $t8,                $zero,      0x7A        # $t8 = 'z'
 
-    slti    $t3,                $t1,        0x61        # $t3 = *cur < 'a'
-    slt     $t4,                $t8,        $t1         # $t4 = *cur > 'z'
+    slti    $t3,                $t9,        0x61        # $t3 = 1 if $t9 < 'a' (less than 0x61)
+    slt     $t4,                $t8,        $t9         # $t4 = 1 if 'z' < $t9 ($t9 > 0x7A)
 
-    or      $t5,                $t3,        $t4         # $t5 = $t3 || $t4
+    or      $t5,                $t3,        $t4         # $t5 = 1 if $t9 is not in the range ['a', 'z']
 
-    bne     $t5,                $zero,      count_upper # if $t5 != 0, jump to count_upper
+    bne     $t5,                $zero,      count_upper # Jump to count_upper if $t5 != 0
+
 
     # Increment the stack at *cur - a
 
-    addi    $t6,                $t1,        -0x61       # $t6 = *cur - 'a'
+    lb      $t9,                0($t1)                  # Load the character pointed by $t1
+
+    addi    $t6,                $t9,        -0x61       # $t6 = *cur - 'a'
 
     add     $t7,                $sp,        $t6         # $t7 = &stack[*cur - 'a']
 
-    lw      $t6,                0($t7)                  # $t6 = stack[*cur - 'a']
+    lb      $t6,                0($t7)                  # $t6 = stack[*cur - 'a']
 
     addi    $t6,                $t6,        1           # stack[*cur - 'a']++
 
-    sw      $t6,                0($t7)                  # stack[*cur - 'a'] = $t6
+    sb      $t6,                0($t7)                  # stack[*cur - 'a'] = $t6
 
     j       count_increment                             # Jump to count_increment
 
@@ -195,11 +199,11 @@ print_end:
 
     addi    $v0,                $zero,      1
     add     $a0,                $zero,      $t2
-    syscall
+    syscall 
 
     addi    $v0,                $zero,      4
     la      $a0,                NEWLINE
-    syscall  
+    syscall 
 
     # Restore the stack
 
